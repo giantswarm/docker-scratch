@@ -8,7 +8,7 @@ references:
       at: *workspace_root
 
 executors:
-  docker-build
+  docker-build:
     docker:
       - image: cimg/base:stable
     working_directory: ~/project
