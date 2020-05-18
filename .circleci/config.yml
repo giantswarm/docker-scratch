@@ -8,7 +8,7 @@ references:
       at: *workspace_root
 
 executors:
-  docker-build
+  docker-build:
     environment:
       IMAGE_NAME: quay.io/giantswarm/scratch
     docker:
@@ -63,7 +63,7 @@ workflows:
               only: /^v.*/
       - push-master:
           requires:
-	    - build
+            - build
           filters:
             tags:
               only: /^v.*/
