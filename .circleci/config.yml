@@ -10,7 +10,7 @@ references:
 executors:
   docker-build:
     environment:
-      IMAGE_NAME: quay.io/giantswarm/scratch
+      IMAGE_NAME: quay.io/giantswarm/docker-scratch
     docker:
       - image: cimg/base:stable
     working_directory: ~/project
