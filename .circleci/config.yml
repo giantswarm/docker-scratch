@@ -15,6 +15,7 @@ executors:
 
 jobs:
   prepare:
+    executor: docker-build
     steps:
       - checkout
       - run: |
