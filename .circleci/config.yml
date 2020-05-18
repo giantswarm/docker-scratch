@@ -23,10 +23,10 @@ jobs:
       - setup_remote_docker
       - run:
           name: Build image
-          command: docker build -t $IMAGE_NAME:$CIRCLE_SHA1 .
+          command: docker build -t ${IMAGE_NAME}:{{ .Environment.CIRCLE_SHA1 }} .
       - run:
           name: Archive image
-          command: docker save -o image.tar $IMAGE_NAME
+          command: docker save -o image.tar ${IMAGE_NAME}
       - persist_to_workspace:
           root: *workspace_root
           paths:
@@ -34,8 +34,8 @@ jobs:
       - run:
           name: Push to quay.io
           command: |
-            echo "$QUAY_PASSWORD" | docker login -u "$QUAY_USERNAME" --password-stdin
-            docker push $IMAGE_NAME:$CIRCLE_SHA1
+            echo "${QUAY_PASSWORD}" | docker login -u "${QUAY_USERNAME}" --password-stdin quay.io
+            docker push ${IMAGE_NAME}:{{ .Environment.CIRCLE_SHA1 }}
   push-master:
     executor: docker-build
     steps:
@@ -46,12 +46,12 @@ jobs:
           command: docker load -i image.tar
       - run:
           name: Tag image with git tag
-          command: docker tag $IMAGE_NAME:$CIRCLE_SHA1 $IMAGE_NAME:$CIRCLE_TAG
+          command: docker tag ${IMAGE_NAME}:{{ .Environment.CIRCLE_SHA1 }} ${IMAGE_NAME}:{{ .Environment.CIRCLE_TAG }}
       - run:
           name: Push to quay.io
           command: |
-            echo "$QUAY_PASSWORD" | docker login -u "$QUAY_USERNAME" --password-stdin
-            docker push $IMAGE_NAME:$CIRCLE_TAG
+            echo "${QUAY_PASSWORD}" | docker login -u "${QUAY_USERNAME}" --password-stdin quay.io
+            docker push ${IMAGE_NAME}:{{ .Environment.CIRCLE_TAG }}
 
 workflows:
   version: 2
