@@ -47,15 +47,20 @@ workflows:
   version: 2
   build-master:
     jobs:
-      - build:
+      - prepare:
           filters:
-            branches:
-              ignore: master
+            tags:
+              only: /^v.*/
+      - build:
+          requires:
+	    - prepare
+          filters:
+            tags:
+              only: /^v.*/
       - push-master:
           requires:
 	    - build
+            - prepare
           filters:
-            branches:
-              ignore: /.*/
             tags:
               only: /^v.*/
