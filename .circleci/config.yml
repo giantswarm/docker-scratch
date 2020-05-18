@@ -53,7 +53,7 @@ workflows:
               only: /^v.*/
       - build:
           requires:
-      - prepare:
+            - prepare
           filters:
             tags:
               only: /^v.*/
