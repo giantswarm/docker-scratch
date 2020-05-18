@@ -53,13 +53,13 @@ workflows:
               only: /^v.*/
       - build:
           requires:
-	    - prepare
+      - prepare:
           filters:
             tags:
               only: /^v.*/
       - push-master:
           requires:
-	    - build
+            - build
             - prepare
           filters:
             tags:
