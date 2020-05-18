@@ -8,60 +8,62 @@ references:
       at: *workspace_root
 
 executors:
-  docker-build:
+  docker-build
+    environment:
+      IMAGE_NAME: quay.io/giantswarm/scratch
     docker:
       - image: cimg/base:stable
     working_directory: ~/project
 
 jobs:
-  prepare:
-    executor: docker-build
-    steps:
-      - checkout
-      - run: |
-          if [ -z $RELEASE_TOKEN ]; then
-            wget -q $(wget -q https://api.github.com/repos/giantswarm/architect/releases/tags/v1.0.0 && cat latest | grep browser_download_url | head -n 1 | cut -d '"' -f 4)
-          else
-            wget -q $(wget -q --header "Authorization: token $RELEASE_TOKEN" https://api.github.com/repos/giantswarm/architect/releases/tags/v1.0.0 && cat latest | grep browser_download_url | head -n 1 | cut -d '"' -f 4)
-          fi
-          chmod +x ./architect
-          ./architect version
-      - persist_to_workspace:
-          root: *workspace_root
-          paths:
-            - architect
   build:
     executor: docker-build
     steps:
       - checkout
       - setup_remote_docker
-      - *attach_workspace
-      - run: ./architect --organisation=giantswarm --project=docker-scratch build
+      - run:
+          name: Build image
+          command: docker build -t $IMAGE_NAME:$CIRCLE_SHA1 .
+      - run:
+          name: Archive image
+          command: docker save -o image.tar $IMAGE_NAME
+      - persist_to_workspace:
+          root: *workspace_root
+          paths:
+            - image.tar
+      - run:
+          name: Push to quay.io
+          command: |
+            echo "$QUAY_PASSWORD" | docker login -u "$QUAY_USERNAME" --password-stdin
+            docker push $IMAGE_NAME:$CIRCLE_SHA1
   push-master:
     executor: docker-build
     steps:
       - setup_remote_docker
       - *attach_workspace
-      - run: ./architect --organisation=giantswarm --project=docker-scratch build
+      - run:
+          name: Load archived image
+          command: docker load -i image.tar
+      - run:
+          name: Tag image with git tag
+          command: docker tag $IMAGE_NAME:$CIRCLE_SHA1 $IMAGE_NAME:$CIRCLE_TAG
+      - run:
+          name: Push to quay.io
+          command: |
+            echo "$QUAY_PASSWORD" | docker login -u "$QUAY_USERNAME" --password-stdin
+            docker push $IMAGE_NAME:$CIRCLE_TAG
 
 workflows:
   version: 2
   build-master:
     jobs:
-      - prepare:
-          filters:
-            tags:
-              only: /^v.*/
       - build:
-          requires:
-            - prepare
           filters:
             tags:
               only: /^v.*/
       - push-master:
           requires:
-            - build
-            - prepare
+	    - build
           filters:
             tags:
               only: /^v.*/
